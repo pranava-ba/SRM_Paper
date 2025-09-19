@@ -33,7 +33,10 @@
 - Dirichlet
 - Poisson
 ---
-
+## Compare moment calculation
+- Central
+- Non Central
+- About any value
 ---
 ## ToFUL
 - Algorithm
