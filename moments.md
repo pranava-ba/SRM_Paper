@@ -10,19 +10,6 @@ Moments
 | **R**                            |                                                                                                                           `moments::moment(x, p = 1, central = TRUE, na.rm = TRUE)` (package `moments`) | `x` (numeric vector), `p` (order), `central=TRUE/FALSE`                                    | `central = TRUE` ⇒ central moment about sample mean                                                    | `moments::moment` returns central moments when `central=TRUE`. Package also supplies utilities to convert central↔raw. ([RDocumentation][3])                                                                                         |
 | **Julia**                        | `Statistics.mean`, `Statistics.var` (sample central moments computed as `mean((x .- mean(x)).^k)`); for distributions: `mean(d)`, `var(d)`, `skewness(d)`, `kurtosis(d)` (Distributions.jl / StatsBase) | sample arrays `x`; distribution objects `d::Distribution`                                  | Central moments = moments taken about `mean(x)` or `mean(d)` for a distribution                        | For sample data compute e.g. `mean((x .- mean(x)).^k)`. Distributions.jl exposes `mean(d)`, `var(d)` etc. Use `OnlineMoments`/`OnlineStats` for streaming central-moment types. ([Julia Documentation][4])                           |
 
-**Key Observations (central):**
-
-* SciPy supplies a ready central-moment helper (`scipy.stats.moment`) and a `center` argument to override the center. ([docs.scipy.org][1])
-* TFP provides a *streaming* central-moment tool (`RunningCentralMoments`) suitable for large/online datasets; other `tfp.stats.*` helpers cover variance/stddev. ([TensorFlow][2])
-* In R and Julia the canonical approach for sample central moments is explicit: subtract the mean and take averages (R package `moments` wraps this for convenience). ([RDocumentation][3])
-
-**Parameter Naming Conventions (central):**
-
-* SciPy uses `order` (or `moment`) and `center`; TFP uses `moment` (which orders to compute) in *experimental* streaming class; R’s `moments::moment` has `p`/`central`; Julia uses generic functions (`mean`, `var`, `skewness`) rather than a single `moment()` in Base. ([docs.scipy.org][1])
-
-**Potential Pitfalls: Inconsistent Parameterization (central):**
-
-* Assuming a single-library default (e.g., “moment() is always central”) is risky — SciPy’s helper is central-by-default but also accepts an explicit `center`. TFP’s streaming API is experimental (API/location may change). R’s `moments::moment` requires `central=TRUE` for central moments. Always check `center`/`central`/`moment` semantics. ([docs.scipy.org][1])
 
 ---
 
@@ -35,17 +22,12 @@ Moments
 | **R**                                         |                                                                                                      `moments::moment(x, p = k, central = FALSE)` or `mean(x^k)` | `x`, `p` (order), `central=FALSE`                   | **Raw** (about origin)                                   | `moments` supports `central=FALSE` for raw moments; `all.moments` can compute many orders. ([RDocumentation][3])                                                                                     |
 | **Julia**                                     | `Statistics.mean(x .^ k)` (sample raw moment); distribution-theoretic raw moments via `mgf`/analytical formulas in Distributions.jl (use `mgf(d,t)`/derivatives) | sample `x` or distribution `d`                      | **Raw** (about origin)                                   | For empirical raw moments: `mean(x.^k)`. For theoretical raw moments use Distributions.jl functions (or compute derivatives of the MGF/CGF supplied by Distributions.jl). ([Julia Documentation][4]) |
 
-**Key Observations (raw):**
 
-* Raw moments are trivially computed via straightforward averaging (`np.mean(a**k)` / `tf.reduce_mean(x**k)` / `mean(x^k)` in R/Julia). SciPy’s `moment(..., center=0)` also reproduces this. ([docs.scipy.org][1])
 
 **Parameter Naming Conventions (raw):**
 
 * Libraries generally call the input the order (`order`, `p`, `k`); R’s `moments::moment` uses `p` and has `central=FALSE` to denote raw moments. ([RDocumentation][3])
 
-**Potential Pitfalls: Inconsistent Parameterization (raw):**
-
-* Be explicit about **which** power you’re averaging and the **center** — it’s easy to accidentally compute raw moments when you intended central ones (or vice versa). When comparing libraries, standardize to the same center (origin vs mean) before aggregating results. ([docs.scipy.org][1])
 
 ---
 
@@ -64,20 +46,11 @@ Moments
 
 **Parameter Naming Conventions (about c):**
 
-* SciPy uses `center`; other ecosystems expect you to pass shifted data (e.g., `mean((x-c)^k)` in R/Julia or `tf.reduce_mean((x-c)**k)` in TensorFlow). Make this explicit in code and documentation. ([docs.scipy.org][1])
+* SciPy uses `center`; other ecosystems expect you to pass shifted data (e.g., `mean((x-c)^k)` in R/Julia or `tf.reduce_mean((x-c)**k)` in TensorFlow). ([docs.scipy.org][1])
 
 **Potential Pitfalls: Inconsistent Parameterization (about c):**
 
 * When combining results across libraries, confirm whether each library's call was taken about the same `c` (mean vs origin vs custom); failure to standardize the center will produce mismatched numerical results. Also beware numerical instability for high-order moments when `c` is large (center near large values increases powers). ([docs.scipy.org][1])
-
----
-
-## Quick checklist 
-
-* If you **need central moments**, prefer the library helper when available (`scipy.stats.moment`, `RunningCentralMoments` in TFP, `moments::moment(…, central=TRUE)`), but validate what “central” means in the API. ([docs.scipy.org][1])
-* If you **need raw moments**, compute `mean(x**k)` / `np.mean(a**k)` / `tf.reduce_mean(x**k)` / `mean(x.^k)` — explicit is safest. ([TensorFlow][5])
-* If you **need moments about c**, either call the library's `center`/`central` option when available (SciPy) or compute `mean((x - c)^k)` (portable). ([docs.scipy.org][1])
-* For **streaming**/online datasets: use `tfp.experimental.stats.RunningCentralMoments` (TFP) or streaming packages in Julia (`OnlineMoments`, `OnlineStats`), or implement numerically stable accumulators (Pebay/Welford-style). ([TensorFlow][2])
 
 ---
 
